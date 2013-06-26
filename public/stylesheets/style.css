@@ -1,0 +1,9 @@
+.title {
+	font: normal 21px 'HelveticaNeueLT';
+color: #ffffff;
+}
+
+.navbar-inverse .navbar-inner {
+background: #438eb9;
+border-color: #438eb9;
+}

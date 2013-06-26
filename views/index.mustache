@@ -1,0 +1,121 @@
+<h1>Backchannel Demo: SERVER</h1>
+<h4>Filter:</h4>
+Type Filter: 
+<select id='type'>
+    <option value="all">All Types</option>
+    <option value="tweet">Tweets Only</option>
+    <option value="image">Images Only</option>
+    <option value="word">Words Only</option>
+</select>
+<br />
+Only show messages containing 
+<div class="input-append">
+    <input class="span2" type="text" id="word" /> 
+    <button class="btn" type="button" id='wordFilter'>Set Word Filter</button>
+</div> <br />
+Only show messages from author 
+<div class="input-append">
+    <input class="span2" type="text" id="author" /> 
+    <button class="btn" type="button" id='authorFilter'>Set Author Filter</button>
+</div>
+<br />
+<input type="button" class="btn" id="clear" value="Clear output"/>
+
+<h4>Messages:</h4>
+<div id="Output">
+<br/>
+
+<script>
+var currentTypeFilter = null;
+var currentWordFilter = null;
+var currentAuthorFilter = null;
+
+var socket = io.connect(window.location);
+
+socket.on('fromServer', function (data) {
+    displayMessage(data.message);
+});
+
+socket.on('message', function (data) {
+	console.log(data);
+    displayMessage(data.message);
+});
+
+function sendMessage()
+{
+    socket.emit('message', { message: $('#MessageText').val() });
+};
+
+function displayMessage( message ) {
+	if(typeof(message) == 'string') {
+		$('#Output').prepend( "<span style='color:red'>[system]</span>: " + message + ' <br />' ); 
+	}
+	else {
+
+        if( currentTypeFilter !== null && message.type !== currentTypeFilter )
+        {
+            console.log("skipping ", message);
+            return;
+        }
+
+
+
+        if(message.type === "image") {
+            $('#Output').prepend( "<img style='max-width: 400px;' src='" + message.content.replace(/\\\//g, "/") + "' /><br />")
+            return;
+        }
+        else {
+
+            if( currentAuthorFilter !== null && message.authorname !== currentAuthorFilter) {
+                console.log("skipping due to not being sent by %s: %s", currentAuthorFilter, message.content);
+                return;
+            }
+
+            if( currentWordFilter == null || message.content.indexOf(currentWordFilter) >= 0 ) {
+
+        	   $('#Output').prepend( "<strong style='color:green'>["+ message.type +
+        									   "]</strong>: <strong>" + message.content + 
+        									   "</strong> size: " + message.size +
+        									   " author " + message.authorname +
+        									   ' <br/>');   
+                
+            }
+            else {
+                console.log('Skipping due to not containing %s: %s', currentWordFilter, message.content);
+            }
+        }
+
+    }
+};
+
+$('#wordFilter').click(function(e) {
+    var word = $('#word').val();
+    currentWordFilter = word.length > 0 ? word : null;
+    $('#Output').prepend("<strong style='color:orange'>[client]</strong> Changing word filter to: " + word + "<br />");
+});
+
+$('#authorFilter').click(function(e) {
+    var author = $('#author').val();
+    currentAuthorFilter = author.length > 0 ? author : null;
+    $('#Output').prepend("<strong style='color:orange'>[client]</strong> Changing author filter to: " + author + "<br />");
+});
+
+$('#clear').click(function(e) {
+    var p = $('#Output').parent();
+    $('#Output').remove();
+    p.append("<div id='Output'></div>");
+});
+
+$('#type').change(function(e) {
+    var newType =  $(this).val();
+
+     $('#Output').prepend("<strong style='color:orange'>[client]</strong> Changing type filter to: " + newType + "<br />");
+
+    if(newType === 'all') {
+        currentTypeFilter = null;
+    }
+    else {
+        currentTypeFilter = newType;
+    }
+})
+</script>
