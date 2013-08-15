@@ -6,7 +6,6 @@ var express = require('express'),
   util = require('util'),
   app = express(),
   config = require('./config'),
-  sample = require('./sampleDataEmitter'),
   server = require('http').createServer(app),
   azure = require('azure'),
   io = require('socket.io').listen(server);
